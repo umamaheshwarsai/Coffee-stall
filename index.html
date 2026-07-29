@@ -316,8 +316,23 @@ window.updateCount = (itemId, value) => { counts[itemId] = value; render(); };
 
 // ---------- render ----------
 function paint() {
+  const active = document.activeElement;
+  const key = active && active.dataset ? active.dataset.key : null;
+  const selStart = active && "selectionStart" in active ? active.selectionStart : null;
+  const selEnd = active && "selectionEnd" in active ? active.selectionEnd : null;
+
   renderTabs();
   renderContent();
+
+  if (key) {
+    const el = document.querySelector(`[data-key="${key}"]`);
+    if (el) {
+      el.focus();
+      if (selStart != null && el.setSelectionRange) {
+        try { el.setSelectionRange(selStart, selEnd); } catch (e) {}
+      }
+    }
+  }
 }
 
 function render() {
@@ -345,10 +360,10 @@ function renderContent() {
 function ingredientsView() {
   const rows = ingredients.map(ing => `
     <div class="row row-ing">
-      <input value="${escapeAttr(ing.name)}" placeholder="e.g. Milk" oninput="updateIngredient('${ing.id}','name',this.value)" />
-      <div class="money-input-wrap"><span>₹</span><input type="number" min="0" value="${ing.cost}" oninput="updateIngredient('${ing.id}','cost',this.value)" /></div>
-      <input type="number" min="0" value="${ing.qty}" oninput="updateIngredient('${ing.id}','qty',this.value)" />
-      <input value="${escapeAttr(ing.unit)}" placeholder="ml" oninput="updateIngredient('${ing.id}','unit',this.value)" />
+      <input data-key="ing-name-${ing.id}" value="${escapeAttr(ing.name)}" placeholder="e.g. Milk" oninput="updateIngredient('${ing.id}','name',this.value)" />
+      <div class="money-input-wrap"><span>₹</span><input data-key="ing-cost-${ing.id}" type="number" min="0" value="${ing.cost}" oninput="updateIngredient('${ing.id}','cost',this.value)" /></div>
+      <input data-key="ing-qty-${ing.id}" type="number" min="0" value="${ing.qty}" oninput="updateIngredient('${ing.id}','qty',this.value)" />
+      <input data-key="ing-unit-${ing.id}" value="${escapeAttr(ing.unit)}" placeholder="ml" oninput="updateIngredient('${ing.id}','unit',this.value)" />
       <div class="price-tag">${money(round2(unitPrice(ing)))}/${ing.unit || 'unit'}</div>
       <button class="icon-btn danger" title="Remove" onclick="removeIngredient('${ing.id}')">&#128465;</button>
     </div>
@@ -356,9 +371,9 @@ function ingredientsView() {
   return `
     <div class="card">
       <div class="section-title">Ingredients</div>
-      <div class="section-sub">Enter what you paid and how much you got — the per-unit price is calculated for you.</div>
+      <div class="section-sub">Enter what each item is expected to cost and how much you'll get for it — the per-unit price is calculated for you.</div>
       <div class="row row-ing">
-        <div class="col-head">Ingredient</div><div class="col-head">Amount paid</div>
+        <div class="col-head">Ingredient</div><div class="col-head">Estimated cost</div>
         <div class="col-head">Quantity</div><div class="col-head">Unit</div>
         <div class="col-head">Price / unit</div><div></div>
       </div>
@@ -375,8 +390,8 @@ function menuView() {
       const options = ingredients.map(i => `<option value="${i.id}" ${i.id === c.ingId ? 'selected' : ''}>${escapeHtml(i.name || '(unnamed)')}</option>`).join("");
       return `
         <div class="row row-comp">
-          <select onchange="updateComponent('${item.id}','${c.id}','ingId',this.value)">${options}</select>
-          <input type="number" min="0" value="${c.qty}" oninput="updateComponent('${item.id}','${c.id}','qty',this.value)" />
+          <select data-key="comp-ing-${item.id}-${c.id}" onchange="updateComponent('${item.id}','${c.id}','ingId',this.value)">${options}</select>
+          <input data-key="comp-qty-${item.id}-${c.id}" type="number" min="0" value="${c.qty}" oninput="updateComponent('${item.id}','${c.id}','qty',this.value)" />
           <div class="unit-label">${ing?.unit || ''}</div>
           <button class="icon-btn danger" title="Remove" onclick="removeComponent('${item.id}','${c.id}')">&#128465;</button>
         </div>
@@ -385,7 +400,7 @@ function menuView() {
     return `
       <div class="menu-item">
         <div class="menu-item-head">
-          <input style="flex:1;font-weight:600;font-size:15px;" value="${escapeAttr(item.name)}" placeholder="Item name, e.g. Hot Coffee" oninput="updateMenuItemName('${item.id}',this.value)" />
+          <input data-key="menu-name-${item.id}" style="flex:1;font-weight:600;font-size:15px;" value="${escapeAttr(item.name)}" placeholder="Item name, e.g. Hot Coffee" oninput="updateMenuItemName('${item.id}',this.value)" />
           <div class="item-cost-tag">${money(round2(itemCost(item)))}/serving</div>
           <button class="icon-btn danger" title="Remove" onclick="removeMenuItem('${item.id}')">&#128465;</button>
         </div>
@@ -407,8 +422,8 @@ function menuView() {
 function chargesView() {
   const rows = charges.map(c => `
     <div class="row row-charge">
-      <input value="${escapeAttr(c.name)}" placeholder="e.g. Machine rental" oninput="updateCharge('${c.id}','name',this.value)" />
-      <div class="money-input-wrap"><span>₹</span><input type="number" min="0" value="${c.rate}" oninput="updateCharge('${c.id}','rate',this.value)" /></div>
+      <input data-key="charge-name-${c.id}" value="${escapeAttr(c.name)}" placeholder="e.g. Machine rental" oninput="updateCharge('${c.id}','name',this.value)" />
+      <div class="money-input-wrap"><span>₹</span><input data-key="charge-rate-${c.id}" type="number" min="0" value="${c.rate}" oninput="updateCharge('${c.id}','rate',this.value)" /></div>
       <button class="icon-btn danger" title="Remove" onclick="removeCharge('${c.id}')">&#128465;</button>
     </div>
   `).join("");
@@ -441,7 +456,7 @@ function calculatorView() {
           <div class="row row-calc">
             <div style="font-size:14px;font-weight:500;">${escapeHtml(item.name || '(unnamed item)')}</div>
             <div class="price-tag" style="color:var(--ink-soft);">${money(round2(cost))}</div>
-            <input type="number" min="0" placeholder="0" value="${counts[item.id] ?? ''}" oninput="updateCount('${item.id}',this.value)" />
+            <input data-key="calc-count-${item.id}" type="number" min="0" placeholder="0" value="${counts[item.id] ?? ''}" oninput="updateCount('${item.id}',this.value)" />
             <div class="price-tag" style="color:var(--rose);font-weight:600;">${money(round2(cost * count))}</div>
           </div>
         `;
