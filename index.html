@@ -41,6 +41,18 @@
   .row-charge{ grid-template-columns:1.6fr 1fr 32px; }
   .row-comp{ grid-template-columns:1.4fr .8fr .6fr 32px; }
   .row-calc{ grid-template-columns:1.6fr .9fr .7fr .9fr; }
+  .field-label{ display:none; }
+  .row .price-tag, .row .unit-label{ overflow-wrap:anywhere; }
+  @media (max-width:640px){
+    .row-ing, .row-charge, .row-comp, .row-calc{
+      grid-template-columns:1fr 1fr; grid-auto-flow:row; gap:8px 10px;
+      padding:10px; border:1px solid var(--line); border-radius:10px; margin-bottom:10px; background:#fff;
+    }
+    .row-ing .icon-btn, .row-charge .icon-btn, .row-comp .icon-btn{ grid-column:1/-1; width:100%; }
+    .row-ing .price-tag, .row-comp .unit-label{ grid-column:1/-1; }
+    .field-label{ display:block; font-size:10.5px; color:var(--ink-soft); margin-bottom:3px; font-weight:600; }
+    .col-head{ display:none; }
+  }
   .col-head{ font-size:11.5px; color:var(--ink-soft); font-weight:600; padding:0 2px; }
   .price-tag{ font-family:'JetBrains Mono',monospace; color:var(--gold); font-weight:500; font-size:13px; }
   .icon-btn{ border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:8px;
@@ -360,11 +372,11 @@ function renderContent() {
 function ingredientsView() {
   const rows = ingredients.map(ing => `
     <div class="row row-ing">
-      <input data-key="ing-name-${ing.id}" value="${escapeAttr(ing.name)}" placeholder="e.g. Milk" oninput="updateIngredient('${ing.id}','name',this.value)" />
-      <div class="money-input-wrap"><span>₹</span><input data-key="ing-cost-${ing.id}" type="number" min="0" value="${ing.cost}" oninput="updateIngredient('${ing.id}','cost',this.value)" /></div>
-      <input data-key="ing-qty-${ing.id}" type="number" min="0" value="${ing.qty}" oninput="updateIngredient('${ing.id}','qty',this.value)" />
-      <input data-key="ing-unit-${ing.id}" value="${escapeAttr(ing.unit)}" placeholder="ml" oninput="updateIngredient('${ing.id}','unit',this.value)" />
-      <div class="price-tag">${money(round2(unitPrice(ing)))}/${ing.unit || 'unit'}</div>
+      <div><span class="field-label">Ingredient</span><input data-key="ing-name-${ing.id}" value="${escapeAttr(ing.name)}" placeholder="e.g. Milk" oninput="updateIngredient('${ing.id}','name',this.value)" /></div>
+      <div><span class="field-label">Estimated cost</span><div class="money-input-wrap"><span>₹</span><input data-key="ing-cost-${ing.id}" type="number" min="0" value="${ing.cost}" oninput="updateIngredient('${ing.id}','cost',this.value)" /></div></div>
+      <div><span class="field-label">Quantity</span><input data-key="ing-qty-${ing.id}" type="number" min="0" value="${ing.qty}" oninput="updateIngredient('${ing.id}','qty',this.value)" /></div>
+      <div><span class="field-label">Unit</span><input data-key="ing-unit-${ing.id}" value="${escapeAttr(ing.unit)}" placeholder="ml" oninput="updateIngredient('${ing.id}','unit',this.value)" /></div>
+      <div><span class="field-label">Price / unit</span><div class="price-tag">${money(round2(unitPrice(ing)))}/${ing.unit || 'unit'}</div></div>
       <button class="icon-btn danger" title="Remove" onclick="removeIngredient('${ing.id}')">&#128465;</button>
     </div>
   `).join("");
@@ -390,9 +402,9 @@ function menuView() {
       const options = ingredients.map(i => `<option value="${i.id}" ${i.id === c.ingId ? 'selected' : ''}>${escapeHtml(i.name || '(unnamed)')}</option>`).join("");
       return `
         <div class="row row-comp">
-          <select data-key="comp-ing-${item.id}-${c.id}" onchange="updateComponent('${item.id}','${c.id}','ingId',this.value)">${options}</select>
-          <input data-key="comp-qty-${item.id}-${c.id}" type="number" min="0" value="${c.qty}" oninput="updateComponent('${item.id}','${c.id}','qty',this.value)" />
-          <div class="unit-label">${ing?.unit || ''}</div>
+          <div><span class="field-label">Ingredient</span><select data-key="comp-ing-${item.id}-${c.id}" onchange="updateComponent('${item.id}','${c.id}','ingId',this.value)">${options}</select></div>
+          <div><span class="field-label">Quantity</span><input data-key="comp-qty-${item.id}-${c.id}" type="number" min="0" value="${c.qty}" oninput="updateComponent('${item.id}','${c.id}','qty',this.value)" /></div>
+          <div><span class="field-label">Unit</span><div class="unit-label">${ing?.unit || ''}</div></div>
           <button class="icon-btn danger" title="Remove" onclick="removeComponent('${item.id}','${c.id}')">&#128465;</button>
         </div>
       `;
@@ -422,8 +434,8 @@ function menuView() {
 function chargesView() {
   const rows = charges.map(c => `
     <div class="row row-charge">
-      <input data-key="charge-name-${c.id}" value="${escapeAttr(c.name)}" placeholder="e.g. Machine rental" oninput="updateCharge('${c.id}','name',this.value)" />
-      <div class="money-input-wrap"><span>₹</span><input data-key="charge-rate-${c.id}" type="number" min="0" value="${c.rate}" oninput="updateCharge('${c.id}','rate',this.value)" /></div>
+      <div><span class="field-label">Charge name</span><input data-key="charge-name-${c.id}" value="${escapeAttr(c.name)}" placeholder="e.g. Machine rental" oninput="updateCharge('${c.id}','name',this.value)" /></div>
+      <div><span class="field-label">Rate</span><div class="money-input-wrap"><span>₹</span><input data-key="charge-rate-${c.id}" type="number" min="0" value="${c.rate}" oninput="updateCharge('${c.id}','rate',this.value)" /></div></div>
       <button class="icon-btn danger" title="Remove" onclick="removeCharge('${c.id}')">&#128465;</button>
     </div>
   `).join("");
@@ -454,10 +466,10 @@ function calculatorView() {
         itemsSubtotal += cost * count;
         return `
           <div class="row row-calc">
-            <div style="font-size:14px;font-weight:500;">${escapeHtml(item.name || '(unnamed item)')}</div>
-            <div class="price-tag" style="color:var(--ink-soft);">${money(round2(cost))}</div>
-            <input data-key="calc-count-${item.id}" type="number" min="0" placeholder="0" value="${counts[item.id] ?? ''}" oninput="updateCount('${item.id}',this.value)" />
-            <div class="price-tag" style="color:var(--rose);font-weight:600;">${money(round2(cost * count))}</div>
+            <div><span class="field-label">Item</span><div style="font-size:14px;font-weight:500;">${escapeHtml(item.name || '(unnamed item)')}</div></div>
+            <div><span class="field-label">Cost / serving</span><div class="price-tag" style="color:var(--ink-soft);">${money(round2(cost))}</div></div>
+            <div><span class="field-label">Pieces</span><input data-key="calc-count-${item.id}" type="number" min="0" placeholder="0" value="${counts[item.id] ?? ''}" oninput="updateCount('${item.id}',this.value)" /></div>
+            <div><span class="field-label">Line total</span><div class="price-tag" style="color:var(--rose);font-weight:600;">${money(round2(cost * count))}</div></div>
           </div>
         `;
       }).join("");
