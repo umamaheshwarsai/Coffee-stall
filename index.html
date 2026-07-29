@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wedding Coffee Counter — Cost Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2E1F16; --ink-soft:#6B5B4E; --paper:#FAF6EF; --card:#FFFEFB;
+    --line:#E7DCC9; --gold:#A9762F; --gold-bg:#F5EBDA; --rose:#B0576B; --rose-bg:#F7E9EC;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    display:flex; justify-content:center; padding:32px 16px;
+  }
+  .wrap{ width:100%; max-width:760px; }
+  .header{ display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+  .logo{ width:40px; height:40px; border-radius:10px; background:var(--rose-bg); color:var(--rose);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:20px; }
+  h1{ font-family:'Fraunces',serif; font-weight:600; font-size:21px; line-height:1.1; margin:0; }
+  .subtitle{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+  .tabs{ display:flex; gap:6px; margin:20px 0 18px; padding:4px; background:#F1E9DA80;
+    border-radius:12px; border:1px solid var(--line); flex-wrap:wrap; }
+  .tab-btn{ flex:1 1 140px; display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:8px 10px; border-radius:9px; border:none; cursor:pointer; font-size:13px; font-weight:500;
+    background:transparent; color:var(--ink-soft); font-family:inherit; }
+  .tab-btn.active{ background:var(--card); color:var(--ink); box-shadow:0 1px 0 rgba(0,0,0,.04); }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .section-title{ font-family:'Fraunces',serif; font-weight:600; font-size:16.5px; }
+  .section-sub{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; margin-bottom:14px; }
+  input, select{
+    border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:14px;
+    color:var(--ink); background:#fff; outline:none; font-family:inherit; width:100%;
+  }
+  .row{ display:grid; gap:8px; align-items:center; margin-bottom:8px; }
+  .row-ing{ grid-template-columns:1.6fr .9fr .9fr .7fr .9fr 32px; }
+  .row-charge{ grid-template-columns:1.6fr 1fr 32px; }
+  .row-comp{ grid-template-columns:1.4fr .8fr .6fr 32px; }
+  .row-calc{ grid-template-columns:1.6fr .9fr .7fr .9fr; }
+  .col-head{ font-size:11.5px; color:var(--ink-soft); font-weight:600; padding:0 2px; }
+  .price-tag{ font-family:'JetBrains Mono',monospace; color:var(--gold); font-weight:500; font-size:13px; }
+  .icon-btn{ border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:8px;
+    width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .icon-btn.danger{ border-color:#E7C9C9; background:#FBEFEF; color:#A34438; }
+  .add-btn{ margin-top:12px; border:1px solid var(--line); background:var(--rose-bg); color:var(--rose);
+    border-radius:9px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px; font-family:inherit; }
+  .menu-item{ border:1px solid var(--line); border-radius:12px; padding:12px; background:#FFFEFC; margin-bottom:14px; }
+  .menu-item-head{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+  .item-cost-tag{ font-size:13px; font-family:'JetBrains Mono',monospace; color:var(--gold); font-weight:600;
+    background:var(--gold-bg); border-radius:8px; padding:6px 10px; white-space:nowrap; }
+  .dashed-add{ margin-top:8px; border:1px dashed var(--line); background:transparent; color:var(--ink-soft);
+    border-radius:8px; padding:6px 10px; font-size:12.5px; cursor:pointer; display:flex; align-items:center;
+    gap:5px; font-family:inherit; }
+  .unit-label{ font-size:12.5px; color:var(--ink-soft); }
+  .money-input-wrap{ position:relative; }
+  .money-input-wrap span{ position:absolute; left:8px; top:9px; color:var(--ink-soft); font-size:12px; }
+  .money-input-wrap input{ padding-left:22px; }
+  .charge-total{ margin-top:14px; padding-top:12px; border-top:1px solid var(--line); display:flex;
+    justify-content:space-between; font-size:13.5px; font-weight:600; }
+  .receipt{ background:var(--card); border:1px dashed var(--line); border-radius:14px; padding:18px 20px;
+    font-family:'JetBrains Mono',monospace; margin-top:14px; }
+  .receipt-title{ font-family:'Fraunces',serif; font-size:15px; font-weight:600; margin-bottom:10px; }
+  .receipt-line{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-soft); padding:3px 0; }
+  .receipt-sub{ display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0;
+    border-top:1px dashed var(--line); margin-top:4px; }
+  .receipt-total{ display:flex; justify-content:space-between; align-items:baseline; margin-top:10px;
+    padding-top:10px; border-top:1px solid var(--ink); }
+  .receipt-total .label{ font-family:'Fraunces',serif; font-size:16px; font-weight:600; }
+  .receipt-total .value{ font-size:22px; font-weight:600; color:var(--gold); }
+  .empty-note{ font-size:13px; color:var(--ink-soft); padding:8px 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">&#9749;</div>
+    <div style="flex:1;">
+      <h1>Wedding coffee counter — cost tracker</h1>
+      <div class="subtitle">Set ingredient prices once, build your menu, and the total updates itself.</div>
+    </div>
+    <div style="text-align:right;">
+      <div id="saved-note" style="font-size:11px;color:var(--ink-soft);opacity:0.85;">Loading…</div>
+      <button onclick="resetToSampleData()" style="margin-top:4px;border:none;background:none;color:var(--ink-soft);font-size:11px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;">Reset to sample data</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="content"></div>
+</div>
+
+<script>
+// ---------- state ----------
+let uidCounter = 1;
+const uid = () => 'id_' + (uidCounter++) + '_' + Date.now().toString(36);
+
+let ingredients = [
+  { id: uid(), name: "Milk", cost: 68, qty: 1000, unit: "ml" },
+  { id: uid(), name: "Coffee decoction / powder", cost: 320, qty: 250, unit: "g" },
+  { id: uid(), name: "Sugar", cost: 48, qty: 1000, unit: "g" },
+  { id: uid(), name: "Drinking chocolate powder", cost: 420, qty: 500, unit: "g" },
+  { id: uid(), name: "Disposable cup", cost: 180, qty: 100, unit: "pcs" },
+];
+const byName = (n) => ingredients.find(i => i.name === n)?.id;
+let menu = [
+  { id: uid(), name: "Hot Coffee", comps: [
+    { id: uid(), ingId: byName("Milk"), qty: 150 },
+    { id: uid(), ingId: byName("Coffee decoction / powder"), qty: 8 },
+    { id: uid(), ingId: byName("Sugar"), qty: 10 },
+    { id: uid(), ingId: byName("Disposable cup"), qty: 1 },
+  ]},
+  { id: uid(), name: "Hot Chocolate", comps: [
+    { id: uid(), ingId: byName("Milk"), qty: 180 },
+    { id: uid(), ingId: byName("Drinking chocolate powder"), qty: 20 },
+    { id: uid(), ingId: byName("Sugar"), qty: 8 },
+    { id: uid(), ingId: byName("Disposable cup"), qty: 1 },
+  ]},
+];
+let charges = [
+  { id: uid(), name: "Machine rental", rate: 3500 },
+  { id: uid(), name: "Gas / fuel", rate: 400 },
+  { id: uid(), name: "Staff / barista", rate: 1500 },
+];
+let counts = {};
+let activeTab = "calculator";
+
+// ---------- persistence (JSONBin cloud sync, shared across devices) ----------
+// 1. Create a free account at https://jsonbin.io
+// 2. Create a new bin (content can just be: {})
+// 3. Copy its Bin ID and your X-Master-Key, paste them below
+// 4. Redeploy — every device that opens this link will now read/write the same bin
+const JSONBIN_CONFIG = {
+  binId: "6a6a452cf5f4af5e29d256b8",
+  apiKey: "$2a$10$5Ms12r9fbKUkzrmyLlxL.uqNxc3zrKcfICnPpTDM7kLYkBLyz0mIq",
+};
+const JSONBIN_READY = JSONBIN_CONFIG.binId !== "PASTE_YOUR_BIN_ID_HERE" && JSONBIN_CONFIG.apiKey !== "PASTE_YOUR_X_MASTER_KEY_HERE";
+
+const LOCAL_CACHE_KEY = "wedding_coffee_tracker_v1";
+let saveTimer = null;
+let isSaving = false;
+let lastSyncedJson = "";
+
+function setSyncNote(text) {
+  const el = document.getElementById("saved-note");
+  if (el) el.textContent = text;
+}
+
+function currentStateJson() {
+  return JSON.stringify({ ingredients, menu, charges, counts });
+}
+
+function cacheLocally() {
+  try { localStorage.setItem(LOCAL_CACHE_KEY, currentStateJson()); } catch (e) {}
+}
+
+function applyState(d) {
+  if (!d || !d.ingredients || !d.menu || !d.charges) return false;
+  ingredients = d.ingredients;
+  menu = d.menu;
+  charges = d.charges;
+  counts = d.counts || {};
+  return true;
+}
+
+async function loadFromCloud() {
+  if (!JSONBIN_READY) {
+    setSyncNote("Cloud sync not set up — see instructions in index.html");
+    return false;
+  }
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`, {
+      headers: { "X-Master-Key": JSONBIN_CONFIG.apiKey },
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const json = await res.json();
+    const record = json.record; // must unwrap .record — the bin's actual saved content
+    if (applyState(record)) {
+      lastSyncedJson = currentStateJson();
+      cacheLocally();
+      setSyncNote("Synced");
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error("Cloud load failed:", e);
+    setSyncNote("Couldn't reach cloud — showing last saved copy on this device");
+    return false;
+  }
+}
+
+async function saveToCloud() {
+  if (!JSONBIN_READY) return;
+  const payload = currentStateJson();
+  if (payload === lastSyncedJson) return; // nothing changed since last sync
+  isSaving = true;
+  setSyncNote("Saving…");
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": JSONBIN_CONFIG.apiKey,
+      },
+      body: payload,
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    lastSyncedJson = payload;
+    setSyncNote("Synced across devices");
+  } catch (e) {
+    console.error("Cloud save failed:", e);
+    setSyncNote("Sync error — saved on this device only");
+  } finally {
+    isSaving = false;
+  }
+}
+
+function queueSave() {
+  cacheLocally();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToCloud, 900);
+}
+
+function loadLocalCache() {
+  try {
+    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+    if (!raw) return false;
+    return applyState(JSON.parse(raw));
+  } catch (e) {
+    return false;
+  }
+}
+
+function anyInputFocused() {
+  const el = document.activeElement;
+  return el && (el.tagName === "INPUT" || el.tagName === "SELECT");
+}
+
+window.resetToSampleData = () => {
+  if (!confirm("This clears everything on all devices and restores the sample data. Continue?")) return;
+  location.reload();
+};
+
+const TABS = [
+  { key: "ingredients", label: "Ingredients", icon: "&#128230;" },
+  { key: "menu", label: "Menu", icon: "&#128203;" },
+  { key: "charges", label: "Standard charges", icon: "&#129534;" },
+  { key: "calculator", label: "Price calculator", icon: "&#128202;" },
+];
+
+// ---------- helpers ----------
+const money = (n) => {
+  if (!isFinite(n)) return "₹0";
+  return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+};
+const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+const unitPrice = (ing) => (!ing || !ing.qty) ? 0 : ing.cost / ing.qty;
+const ingById = (id) => ingredients.find(i => i.id === id);
+const itemCost = (item) => item.comps.reduce((sum, c) => {
+  const ing = ingById(c.ingId);
+  return sum + (ing ? unitPrice(ing) * (Number(c.qty) || 0) : 0);
+}, 0);
+const totalCharges = () => charges.reduce((s, c) => s + (Number(c.rate) || 0), 0);
+
+// expose mutators on window so inline handlers can call them
+window.setTab = (key) => { activeTab = key; render(); };
+
+window.addIngredient = () => { ingredients.push({ id: uid(), name: "", cost: 0, qty: 1, unit: "g" }); render(); };
+window.updateIngredient = (id, field, value) => {
+  const ing = ingredients.find(i => i.id === id);
+  if (!ing) return;
+  ing[field] = (field === "cost" || field === "qty") ? Number(value) : value;
+  render();
+};
+window.removeIngredient = (id) => {
+  ingredients = ingredients.filter(i => i.id !== id);
+  menu.forEach(item => item.comps = item.comps.filter(c => c.ingId !== id));
+  render();
+};
+
+window.addMenuItem = () => { menu.push({ id: uid(), name: "", comps: [] }); render(); };
+window.removeMenuItem = (id) => { menu = menu.filter(i => i.id !== id); delete counts[id]; render(); };
+window.updateMenuItemName = (id, name) => {
+  const item = menu.find(i => i.id === id); if (item) item.name = name; render();
+};
+window.addComponent = (itemId) => {
+  const item = menu.find(i => i.id === itemId);
+  if (item) item.comps.push({ id: uid(), ingId: ingredients[0]?.id || "", qty: 0 });
+  render();
+};
+window.updateComponent = (itemId, compId, field, value) => {
+  const item = menu.find(i => i.id === itemId);
+  const c = item?.comps.find(c => c.id === compId);
+  if (!c) return;
+  c[field] = field === "qty" ? Number(value) : value;
+  render();
+};
+window.removeComponent = (itemId, compId) => {
+  const item = menu.find(i => i.id === itemId);
+  if (item) item.comps = item.comps.filter(c => c.id !== compId);
+  render();
+};
+
+window.addCharge = () => { charges.push({ id: uid(), name: "", rate: 0 }); render(); };
+window.updateCharge = (id, field, value) => {
+  const c = charges.find(c => c.id === id); if (!c) return;
+  c[field] = field === "rate" ? Number(value) : value;
+  render();
+};
+window.removeCharge = (id) => { charges = charges.filter(c => c.id !== id); render(); };
+
+window.updateCount = (itemId, value) => { counts[itemId] = value; render(); };
+
+// ---------- render ----------
+function paint() {
+  renderTabs();
+  renderContent();
+}
+
+function render() {
+  paint();
+  queueSave();
+}
+
+function renderTabs() {
+  const el = document.getElementById("tabs");
+  el.innerHTML = TABS.map(t => `
+    <button class="tab-btn ${activeTab === t.key ? 'active' : ''}" onclick="setTab('${t.key}')">
+      <span>${t.icon}</span> ${t.label}
+    </button>
+  `).join("");
+}
+
+function renderContent() {
+  const el = document.getElementById("content");
+  if (activeTab === "ingredients") return el.innerHTML = ingredientsView();
+  if (activeTab === "menu") return el.innerHTML = menuView();
+  if (activeTab === "charges") return el.innerHTML = chargesView();
+  if (activeTab === "calculator") return el.innerHTML = calculatorView();
+}
+
+function ingredientsView() {
+  const rows = ingredients.map(ing => `
+    <div class="row row-ing">
+      <input value="${escapeAttr(ing.name)}" placeholder="e.g. Milk" oninput="updateIngredient('${ing.id}','name',this.value)" />
+      <div class="money-input-wrap"><span>₹</span><input type="number" min="0" value="${ing.cost}" oninput="updateIngredient('${ing.id}','cost',this.value)" /></div>
+      <input type="number" min="0" value="${ing.qty}" oninput="updateIngredient('${ing.id}','qty',this.value)" />
+      <input value="${escapeAttr(ing.unit)}" placeholder="ml" oninput="updateIngredient('${ing.id}','unit',this.value)" />
+      <div class="price-tag">${money(round2(unitPrice(ing)))}/${ing.unit || 'unit'}</div>
+      <button class="icon-btn danger" title="Remove" onclick="removeIngredient('${ing.id}')">&#128465;</button>
+    </div>
+  `).join("");
+  return `
+    <div class="card">
+      <div class="section-title">Ingredients</div>
+      <div class="section-sub">Enter what you paid and how much you got — the per-unit price is calculated for you.</div>
+      <div class="row row-ing">
+        <div class="col-head">Ingredient</div><div class="col-head">Amount paid</div>
+        <div class="col-head">Quantity</div><div class="col-head">Unit</div>
+        <div class="col-head">Price / unit</div><div></div>
+      </div>
+      ${rows}
+      <button class="add-btn" onclick="addIngredient()">&#43; Add ingredient</button>
+    </div>
+  `;
+}
+
+function menuView() {
+  const items = menu.map(item => {
+    const comps = item.comps.map(c => {
+      const ing = ingById(c.ingId);
+      const options = ingredients.map(i => `<option value="${i.id}" ${i.id === c.ingId ? 'selected' : ''}>${escapeHtml(i.name || '(unnamed)')}</option>`).join("");
+      return `
+        <div class="row row-comp">
+          <select onchange="updateComponent('${item.id}','${c.id}','ingId',this.value)">${options}</select>
+          <input type="number" min="0" value="${c.qty}" oninput="updateComponent('${item.id}','${c.id}','qty',this.value)" />
+          <div class="unit-label">${ing?.unit || ''}</div>
+          <button class="icon-btn danger" title="Remove" onclick="removeComponent('${item.id}','${c.id}')">&#128465;</button>
+        </div>
+      `;
+    }).join("");
+    return `
+      <div class="menu-item">
+        <div class="menu-item-head">
+          <input style="flex:1;font-weight:600;font-size:15px;" value="${escapeAttr(item.name)}" placeholder="Item name, e.g. Hot Coffee" oninput="updateMenuItemName('${item.id}',this.value)" />
+          <div class="item-cost-tag">${money(round2(itemCost(item)))}/serving</div>
+          <button class="icon-btn danger" title="Remove" onclick="removeMenuItem('${item.id}')">&#128465;</button>
+        </div>
+        ${comps}
+        <button class="dashed-add" onclick="addComponent('${item.id}')">&#43; Add ingredient to this item</button>
+      </div>
+    `;
+  }).join("");
+  return `
+    <div class="card">
+      <div class="section-title">Menu</div>
+      <div class="section-sub">Build each drink from your ingredients. Cost per serving updates as you type.</div>
+      ${items}
+      <button class="add-btn" onclick="addMenuItem()">&#43; Add menu item</button>
+    </div>
+  `;
+}
+
+function chargesView() {
+  const rows = charges.map(c => `
+    <div class="row row-charge">
+      <input value="${escapeAttr(c.name)}" placeholder="e.g. Machine rental" oninput="updateCharge('${c.id}','name',this.value)" />
+      <div class="money-input-wrap"><span>₹</span><input type="number" min="0" value="${c.rate}" oninput="updateCharge('${c.id}','rate',this.value)" /></div>
+      <button class="icon-btn danger" title="Remove" onclick="removeCharge('${c.id}')">&#128465;</button>
+    </div>
+  `).join("");
+  return `
+    <div class="card">
+      <div class="section-title">Standard charges</div>
+      <div class="section-sub">Flat, one-time costs that apply regardless of how many cups are served — rental, staff, gas, decor.</div>
+      <div class="row row-charge">
+        <div class="col-head">Charge name</div><div class="col-head">Rate</div><div></div>
+      </div>
+      ${rows}
+      <button class="add-btn" onclick="addCharge()">&#43; Add standard charge</button>
+      <div class="charge-total">
+        <span style="color:var(--ink-soft);font-weight:500;">Total standard charges</span>
+        <span class="price-tag">${money(round2(totalCharges()))}</span>
+      </div>
+    </div>
+  `;
+}
+
+function calculatorView() {
+  let itemsSubtotal = 0;
+  const rows = menu.length === 0
+    ? `<div class="empty-note">Add items on the Menu tab to see them here.</div>`
+    : menu.map(item => {
+        const cost = itemCost(item);
+        const count = Number(counts[item.id]) || 0;
+        itemsSubtotal += cost * count;
+        return `
+          <div class="row row-calc">
+            <div style="font-size:14px;font-weight:500;">${escapeHtml(item.name || '(unnamed item)')}</div>
+            <div class="price-tag" style="color:var(--ink-soft);">${money(round2(cost))}</div>
+            <input type="number" min="0" placeholder="0" value="${counts[item.id] ?? ''}" oninput="updateCount('${item.id}',this.value)" />
+            <div class="price-tag" style="color:var(--rose);font-weight:600;">${money(round2(cost * count))}</div>
+          </div>
+        `;
+      }).join("");
+
+  const grandTotal = itemsSubtotal + totalCharges();
+
+  const receiptLines = menu.filter(item => (Number(counts[item.id]) || 0) > 0).map(item => {
+    const cost = itemCost(item);
+    const count = Number(counts[item.id]) || 0;
+    return `<div class="receipt-line"><span>${escapeHtml(item.name || '(unnamed)')} × ${count}</span><span>${money(round2(cost * count))}</span></div>`;
+  }).join("");
+
+  const chargeLines = charges.map(c => `
+    <div class="receipt-line"><span>${escapeHtml(c.name || '(unnamed charge)')}</span><span>${money(round2(Number(c.rate) || 0))}</span></div>
+  `).join("");
+
+  return `
+    <div class="card">
+      <div class="section-title">Price calculator</div>
+      <div class="section-sub">Enter how many of each item you expect to serve.</div>
+      <div class="row row-calc">
+        <div class="col-head">Item</div><div class="col-head">Cost / serving</div>
+        <div class="col-head">Pieces</div><div class="col-head">Line total</div>
+      </div>
+      ${rows}
+    </div>
+    <div class="receipt">
+      <div class="receipt-title">Bill summary</div>
+      ${receiptLines}
+      ${itemsSubtotal > 0 ? `<div class="receipt-sub"><span style="color:var(--ink-soft);">Items subtotal</span><span>${money(round2(itemsSubtotal))}</span></div>` : ''}
+      ${chargeLines}
+      <div class="receipt-total">
+        <span class="label">Total</span>
+        <span class="value">${money(round2(grandTotal))}</span>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+async function pollCloud() {
+  if (isSaving || anyInputFocused()) return;
+  const changed = await loadFromCloud();
+  if (changed) paint();
+}
+
+(async function init() {
+  loadLocalCache();
+  paint();
+  setSyncNote(JSONBIN_READY ? "Loading latest…" : "Cloud sync not set up — see instructions in index.html");
+  await loadFromCloud();
+  paint();
+  setInterval(pollCloud, 8000);
+  window.addEventListener("focus", pollCloud);
+})();
+</script>
+</body>
+</html>
