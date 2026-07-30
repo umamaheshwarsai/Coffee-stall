@@ -41,10 +41,11 @@
   .row-charge{ grid-template-columns:1.6fr 1fr 32px; }
   .row-comp{ grid-template-columns:1.4fr .8fr .6fr 32px; }
   .row-calc{ grid-template-columns:1.6fr .9fr .7fr .9fr; }
+  .row-shop{ grid-template-columns:1.5fr 1fr 1.1fr 1fr; }
   .field-label{ display:none; }
   .row .price-tag, .row .unit-label{ overflow-wrap:anywhere; }
   @media (max-width:640px){
-    .row-ing, .row-charge, .row-comp, .row-calc{
+    .row-ing, .row-charge, .row-comp, .row-calc, .row-shop{
       grid-template-columns:1fr 1fr; grid-auto-flow:row; gap:8px 10px;
       padding:10px; border:1px solid var(--line); border-radius:10px; margin-bottom:10px; background:#fff;
     }
@@ -261,6 +262,7 @@ const TABS = [
   { key: "menu", label: "Menu", icon: "&#128203;" },
   { key: "charges", label: "Standard charges", icon: "&#129534;" },
   { key: "calculator", label: "Price calculator", icon: "&#128202;" },
+  { key: "shopping", label: "Shopping list", icon: "&#128722;" },
 ];
 
 // ---------- helpers ----------
@@ -276,6 +278,29 @@ const itemCost = (item) => item.comps.reduce((sum, c) => {
   return sum + (ing ? unitPrice(ing) * (Number(c.qty) || 0) : 0);
 }, 0);
 const totalCharges = () => charges.reduce((s, c) => s + (Number(c.rate) || 0), 0);
+
+function neededQtyForIngredient(ingId) {
+  return menu.reduce((sum, item) => {
+    const count = Number(counts[item.id]) || 0;
+    if (count <= 0) return sum;
+    const comp = item.comps.find(c => c.ingId === ingId);
+    if (!comp) return sum;
+    return sum + (Number(comp.qty) || 0) * count;
+  }, 0);
+}
+
+function shoppingListRows() {
+  return ingredients
+    .map(ing => {
+      const needed = neededQtyForIngredient(ing.id);
+      const packSize = Number(ing.qty) || 0;
+      const packs = packSize > 0 ? Math.ceil(needed / packSize) : 0;
+      const buying = packs * packSize;
+      const cost = packs * (Number(ing.cost) || 0);
+      return { ing, needed, packSize, packs, buying, cost };
+    })
+    .filter(r => r.needed > 0);
+}
 
 // expose mutators on window so inline handlers can call them
 window.setTab = (key) => { activeTab = key; render(); };
@@ -367,6 +392,7 @@ function renderContent() {
   if (activeTab === "menu") return el.innerHTML = menuView();
   if (activeTab === "charges") return el.innerHTML = chargesView();
   if (activeTab === "calculator") return el.innerHTML = calculatorView();
+  if (activeTab === "shopping") return el.innerHTML = shoppingListView();
 }
 
 function ingredientsView() {
@@ -509,6 +535,49 @@ function calculatorView() {
   `;
 }
 
+function shoppingListView() {
+  const rows = shoppingListRows();
+  const anyCounts = menu.some(item => (Number(counts[item.id]) || 0) > 0);
+  const grandCost = rows.reduce((s, r) => s + r.cost, 0);
+
+  if (!anyCounts) {
+    return `
+      <div class="card">
+        <div class="section-title">Shopping list</div>
+        <div class="section-sub">Works out how much of each ingredient to order, based on how many pieces you're planning per item.</div>
+        <div class="empty-note">Go to the Price calculator tab and enter expected pieces for your menu items — this list fills in automatically once you do.</div>
+      </div>
+    `;
+  }
+
+  const body = rows.map(r => `
+    <div class="row row-shop">
+      <div><span class="field-label">Ingredient</span><div style="font-size:14px;font-weight:500;">${escapeHtml(r.ing.name || '(unnamed)')}</div></div>
+      <div><span class="field-label">Needed</span><div class="price-tag" style="color:var(--ink-soft);">${round2(r.needed)} ${escapeHtml(r.ing.unit || '')}</div></div>
+      <div><span class="field-label">Pack size</span><div class="unit-label">${round2(r.packSize)} ${escapeHtml(r.ing.unit || '')}/pack</div></div>
+      <div><span class="field-label">Packs to order</span><div class="price-tag" style="font-weight:600;">${r.packs}</div></div>
+      <div><span class="field-label">You'll have</span><div class="unit-label">${round2(r.buying)} ${escapeHtml(r.ing.unit || '')}</div></div>
+      <div><span class="field-label">Est. cost</span><div class="price-tag" style="color:var(--rose);font-weight:600;">${money(round2(r.cost))}</div></div>
+    </div>
+  `).join("");
+
+  return `
+    <div class="card">
+      <div class="section-title">Shopping list</div>
+      <div class="section-sub">Based on the pieces you entered in the Price calculator — quantities are rounded up to whole packs of each ingredient.</div>
+      <div class="row row-shop">
+        <div class="col-head">Ingredient</div><div class="col-head">Needed</div>
+        <div class="col-head">Pack size</div><div class="col-head">Packs to order</div>
+        <div class="col-head">You'll have</div><div class="col-head">Est. cost</div>
+      </div>
+      ${body}
+      <div class="charge-total">
+        <span style="color:var(--ink-soft);font-weight:500;">Estimated ingredient cost</span>
+        <span class="price-tag">${money(round2(grandCost))}</span>
+      </div>
+    </div>
+  `;
+}
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
